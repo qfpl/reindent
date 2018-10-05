@@ -2,13 +2,11 @@
 
 module Main where
 
-import Control.Applicative ((<$>), (<**>), (<|>), liftA2, many)
 import Control.Lens
 import Data.Foldable (traverse_)
 import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 import Data.Validation (Validation (Success, Failure))
-import qualified Options.Applicative as O
 
 import Language.Python.Parse as HPY
 import Language.Python.Internal.Optics
@@ -16,41 +14,7 @@ import Language.Python.Internal.Render
 import Language.Python.Internal.Syntax
 
 import Reindent.FileIO
-
----- Options parsing
-data AppOptions =
-  AppOptions
-    { desiredIndentation :: [Whitespace]
-    , optFiles :: [FilePath]
-    }
-  deriving (Eq, Show)
-
-appOptions :: O.Parser AppOptions
-appOptions = AppOptions <$> indentationOpts <*> many pyfile <**> O.helper
-
-indentationOpts :: O.Parser [Whitespace]
-indentationOpts =
-  liftA2 f tab spaces
-    where
-      f b i = if b then [Tab] else replicate i Space
-      tab = O.switch $ mconcat
-        [ O.long "tabs"
-        , O.help "Replace indentation with tabs"]
-      spaces = O.option O.auto (mconcat
-        [ O.long "spaces"
-        , O.metavar "num"
-        , O.help "Replace indentation with spaces"
-        ]) <|> pure 4
-
-pyfile :: O.Parser FilePath
-pyfile =
-  O.strArgument $
-    mconcat [O.metavar "python-file", O.help "Python source file to reindent"]
-
-parseOpts :: IO AppOptions
-parseOpts = O.execParser . O.info appOptions $ mconcat
-  [O.fullDesc, O.header "reindent - fix inconsistent python indentation"]
-
+import Reindent.Options
 
 ---- Indentation stuff
 setStatementIndents :: [Whitespace] -> Statement '[] a -> Statement '[] a

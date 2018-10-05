@@ -1,6 +1,5 @@
 module Reindent.FileIO where
 
-import Control.Applicative ((<$>))
 import Data.List (isPrefixOf, isSuffixOf)
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
