@@ -28,7 +28,7 @@ data AppOptions =
     { desiredIndentation :: [Whitespace]
     , optFiles :: [FilePath]
     }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Show)
 
 appOptions :: O.Parser AppOptions
 appOptions = AppOptions <$> indentationOpts <*> many pyfile <**> O.helper
