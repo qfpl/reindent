@@ -59,8 +59,11 @@ setStatementIndents desired = transform (_Indent .~ desired)
 setModuleIndents :: [Whitespace] -> Module '[] a -> Module '[] a
 setModuleIndents = over _Statements . setStatementIndents
 
-parseModuleN :: Named Text -> Validation (NonEmpty (ParseError SrcInfo)) (Named (Module '[] SrcInfo))
-parseModuleN (Named n a) = Named n <$> HPY.parseModule n a
+parseNamedModule :: Named Text -> Validation (NonEmpty (ParseError SrcInfo)) (Named (Module '[] SrcInfo))
+parseNamedModule (Named n a) = Named n <$> HPY.parseModule n a
+
+parseNamedModules :: [Named Text] -> Validation (NonEmpty (ParseError SrcInfo)) [Named (Module '[] SrcInfo)]
+parseNamedModules = traverse parseNamedModule
 
 ---- main
 main :: IO ()
@@ -69,13 +72,10 @@ main = do
   let desiredIndent = desiredIndentation opts
   filePaths <- getDirTrees (optFiles opts)
   files <- readNamedFiles filePaths
-  let
-    parsedModules :: Validation (NonEmpty (ParseError SrcInfo)) [Named (Module '[] SrcInfo)]
-    parsedModules = traverse parseModuleN files
-  case parsedModules of
+  case parseNamedModules files of
     Failure e -> do
       putStrLn "The following errors occurred:"
       traverse_ print e
     Success mods -> do
       let mods' = fmap (fmap (setModuleIndents desiredIndent)) mods
-      traverse_ (writeFileN . fmap showModule) mods'
+      traverse_ (writeNamedFile . fmap showModule) mods'

@@ -6,6 +6,7 @@ import Data.Text (Text)
 import qualified Data.Text.IO as Text
 import System.Directory
 
+-- some data along with its filepath
 data Named a =
   Named {
     name  :: FilePath
@@ -21,8 +22,14 @@ instance Foldable Named where
 instance Traversable Named where
   traverse f (Named n a) = Named n <$> f a
 
-writeFileN :: Named Text -> IO ()
-writeFileN (Named fp text) = Text.writeFile fp text
+writeNamedFile :: Named Text -> IO ()
+writeNamedFile (Named fp text) = Text.writeFile fp text
+
+readNamedFile :: FilePath -> IO (Named Text)
+readNamedFile fp = traverse Text.readFile (Named fp fp)
+
+readNamedFiles :: [FilePath] -> IO [Named Text]
+readNamedFiles = traverse readNamedFile
 
 isPythonFile :: FilePath -> Bool
 isPythonFile = isSuffixOf ".py"
@@ -46,8 +53,3 @@ getDirTree fp = do
 getDirTrees :: [FilePath] -> IO [FilePath]
 getDirTrees = fmap concat . traverse getDirTree
 
-readNamedFile :: FilePath -> IO (Named Text)
-readNamedFile fp = traverse Text.readFile (Named fp fp)
-
-readNamedFiles :: [FilePath] -> IO [Named Text]
-readNamedFiles = traverse readNamedFile
