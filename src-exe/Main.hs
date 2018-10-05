@@ -1,26 +1,21 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveFoldable #-}
-{-# LANGUAGE DeriveTraversable #-}
 
 module Main where
 
 import Control.Applicative ((<$>), (<**>), (<|>), liftA2, many)
 import Control.Lens
 import Data.Foldable (traverse_)
-import Data.List (isPrefixOf, isSuffixOf)
 import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
-import qualified Data.Text.IO as Text
 import Data.Validation (Validation (Success, Failure))
 import qualified Options.Applicative as O
-import System.Directory
 
 import Language.Python.Parse as HPY
 import Language.Python.Internal.Optics
 import Language.Python.Internal.Render
 import Language.Python.Internal.Syntax
 
+import Reindent.FileIO
 
 ---- Options parsing
 data AppOptions =
@@ -32,8 +27,6 @@ data AppOptions =
 
 appOptions :: O.Parser AppOptions
 appOptions = AppOptions <$> indentationOpts <*> many pyfile <**> O.helper
-  --where
-    --many1 p = liftA2 (:|) p (many p)
 
 indentationOpts :: O.Parser [Whitespace]
 indentationOpts =
@@ -66,42 +59,8 @@ setStatementIndents desired = transform (_Indent .~ desired)
 setModuleIndents :: [Whitespace] -> Module '[] a -> Module '[] a
 setModuleIndents = over _Statements . setStatementIndents
 
-
----- File IO
-
-data Named a =
-  Named {
-    name  :: FilePath
-  , value :: a
-  } deriving (Functor, Foldable, Traversable)
-
-writeFileN :: Named Text -> IO ()
-writeFileN (Named fp text) = Text.writeFile fp text
-
 parseModuleN :: Named Text -> Validation (NonEmpty (ParseError SrcInfo)) (Named (Module '[] SrcInfo))
 parseModuleN (Named n a) = Named n <$> HPY.parseModule n a
-
-isPythonFile :: FilePath -> Bool
-isPythonFile = isSuffixOf ".py"
-
-isHidden :: FilePath -> Bool
-isHidden = isPrefixOf "."
-
-getDirTree :: FilePath -> IO [FilePath]
-getDirTree fp = do
-  isFile <- doesFileExist fp
-  if isFile then
-    if isPythonFile fp then pure [fp] else pure []
-  else do
-    isDir <- doesDirectoryExist fp
-    if not isDir then pure []
-    else do
-      contents <- filter (not . isHidden) <$> listDirectory fp
-      let fps = (\x -> fp ++ "/" ++ x) <$> contents
-      concat <$> traverse getDirTree fps
-
-getDirTrees :: [FilePath] -> IO [FilePath]
-getDirTrees = fmap concat . traverse getDirTree
 
 ---- main
 main :: IO ()
@@ -109,7 +68,7 @@ main = do
   opts <- parseOpts
   let desiredIndent = desiredIndentation opts
   filePaths <- getDirTrees (optFiles opts)
-  files <- traverse (\fp -> traverse Text.readFile (Named fp fp)) filePaths
+  files <- readNamedFiles filePaths
   let
     parsedModules :: Validation (NonEmpty (ParseError SrcInfo)) [Named (Module '[] SrcInfo)]
     parsedModules = traverse parseModuleN files
