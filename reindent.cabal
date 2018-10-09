@@ -29,12 +29,15 @@ library
       base
     , directory >= 1.2.5 && < 1.4
     , hpython
+    , lens
     , optparse-applicative
     , text
     , validation >= 1 && < 1.1
   exposed-modules:
+    Reindent.Indentation
     Reindent.FileIO
     Reindent.Options
+    Reindent.Transformations
 
 executable reindent
   main-is:             Main.hs
@@ -43,7 +46,6 @@ executable reindent
   build-depends:
       base >=4.8 && < 4.13
     , hpython
-    , lens
     , reindent
     , text
     , validation >= 1 && < 1.1
