@@ -5,7 +5,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Reindent.Transformations where
+module Reindent.Transformation.Type where
 
 import Prelude hiding ((.),id)
 import Control.Category

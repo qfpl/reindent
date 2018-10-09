@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 
-module Reindent.Indentation (DesiredIndentation (..), reindent) where
+module Reindent.Transformation.Indentation (DesiredIndentation (..), reindent) where
 
 import Control.Lens ((.~))
 import Data.List (replicate)
@@ -8,7 +8,7 @@ import Data.List (replicate)
 import Language.Python.Internal.Optics
 import Language.Python.Internal.Syntax
 
-import Reindent.Transformations
+import Reindent.Transformation.Type
 
 data DesiredIndentation =
   DITab | DISpaces Int

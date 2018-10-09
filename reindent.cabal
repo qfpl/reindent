@@ -16,7 +16,9 @@ build-type:          Simple
 
 extra-source-files:
   CHANGELOG.md
-  test-files/test.py
+  test-files/other/Hello.hs
+  test-files/other/Hello2.hs
+  test-files/python/test.py
 
 cabal-version:       >=1.10
 
@@ -34,10 +36,11 @@ library
     , text
     , validation >= 1 && < 1.1
   exposed-modules:
-    Reindent.Indentation
     Reindent.FileIO
     Reindent.Options
-    Reindent.Transformations
+    Reindent.Transformation
+    Reindent.Transformation.Indentation
+    Reindent.Transformation.Type
 
 executable reindent
   main-is:             Main.hs

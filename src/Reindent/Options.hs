@@ -3,7 +3,7 @@ module Reindent.Options where
 import Control.Applicative ((<$>), (<**>), (<|>), liftA2, many)
 import qualified Options.Applicative as O
 
-import Reindent.Indentation (DesiredIndentation (DITab, DISpaces))
+import Reindent.Transformation.Indentation (DesiredIndentation (DITab, DISpaces))
 
 data AppOptions =
   AppOptions

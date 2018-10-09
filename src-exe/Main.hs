@@ -13,9 +13,8 @@ import Language.Python.Internal.Render
 import Language.Python.Internal.Syntax
 
 import Reindent.FileIO
-import Reindent.Indentation
 import Reindent.Options
-import Reindent.Transformations
+import Reindent.Transformation
 
 parseNamedModule :: Named Text -> Validation (NonEmpty (ParseError SrcInfo)) (Named (Module '[] SrcInfo))
 parseNamedModule (Named n a) = Named n <$> HPY.parseModule n a
