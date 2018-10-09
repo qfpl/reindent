@@ -2,11 +2,12 @@ module Reindent.Options where
 
 import Control.Applicative ((<$>), (<**>), (<|>), liftA2, many)
 import qualified Options.Applicative as O
-import Language.Python.Internal.Syntax
+
+import Reindent.Indentation (DesiredIndentation (DITab, DISpaces))
 
 data AppOptions =
   AppOptions
-    { desiredIndentation :: [Whitespace]
+    { desiredIndentation :: DesiredIndentation
     , optFiles :: [FilePath]
     }
   deriving (Eq, Show)
@@ -14,11 +15,11 @@ data AppOptions =
 appOptions :: O.Parser AppOptions
 appOptions = AppOptions <$> indentationOpts <*> many pyfile <**> O.helper
 
-indentationOpts :: O.Parser [Whitespace]
+indentationOpts :: O.Parser DesiredIndentation
 indentationOpts =
   liftA2 f tab spaces
     where
-      f b i = if b then [Tab] else replicate i Space
+      f b i = if b then DITab else DISpaces i
       tab = O.switch $ mconcat
         [ O.long "tabs"
         , O.help "Replace indentation with tabs"]
@@ -26,7 +27,8 @@ indentationOpts =
         [ O.long "spaces"
         , O.metavar "num"
         , O.help "Replace indentation with spaces"
-        ]) <|> pure 4
+        ]) <|> pure defaultSpaces
+      defaultSpaces = 4
 
 pyfile :: O.Parser FilePath
 pyfile =

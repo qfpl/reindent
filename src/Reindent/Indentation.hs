@@ -1,16 +1,26 @@
 {-# LANGUAGE DataKinds #-}
 
-module Reindent.Indentation where
+module Reindent.Indentation (DesiredIndentation (..), reindent) where
 
 import Control.Lens ((.~))
+import Data.List (replicate)
 
 import Language.Python.Internal.Optics
 import Language.Python.Internal.Syntax
 
 import Reindent.Transformations
 
+data DesiredIndentation =
+  DITab | DISpaces Int
+  deriving (Eq, Ord, Show)
+
 setStatementIndents :: [Whitespace] -> Statement '[] a -> Statement '[] a
 setStatementIndents desired = (_Indent .~ desired)
 
-setModuleIndents :: Applicative f => [Whitespace] -> Pypeline f '[] a
-setModuleIndents = allStatements . setStatementIndents
+reindent :: Applicative f => DesiredIndentation -> Pypeline f '[] a
+reindent = allStatements . setStatementIndents . expandDI
+
+expandDI :: DesiredIndentation -> [Whitespace]
+expandDI di = case di of
+  DITab -> [Tab]
+  DISpaces i -> replicate i Space

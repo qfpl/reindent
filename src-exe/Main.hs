@@ -28,7 +28,7 @@ main :: IO ()
 main = do
   opts <- parseOpts
   let desiredIndent = desiredIndentation opts
-  let refactor = runPypeline' (setModuleIndents desiredIndent)
+  let refactor = runPypeline' (reindent desiredIndent)
   filePaths <- getDirTrees (optFiles opts)
   files <- readNamedFiles filePaths
   case parseNamedModules files of
