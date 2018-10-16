@@ -29,10 +29,12 @@ library
     -Wall
   build-depends:
       base
+    , bifunctors
     , directory >= 1.2.5 && < 1.4
     , hpython
     , lens
     , optparse-applicative
+    , split
     , text
     , validation >= 1 && < 1.1
   exposed-modules:
