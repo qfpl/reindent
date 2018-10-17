@@ -12,6 +12,18 @@ def fib(x):
     return fib(x-1) + fib(x-2)
 
 def main():
+    "This is a comment"
+    """This is also a comment"""
+    """This
+       =
+       comment
+    """
+    """
+       This
+       =
+       comment
+    """
+
     print(fib(5))
     print(fact(7))
 
