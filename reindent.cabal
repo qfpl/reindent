@@ -30,11 +30,11 @@ library
   build-depends:
       base
     , bifunctors
+    , containers
     , directory >= 1.2.5 && < 1.4
     , hpython
     , lens
     , optparse-applicative
-    , split
     , text
     , validation >= 1 && < 1.1
   exposed-modules:
