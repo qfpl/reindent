@@ -6,16 +6,16 @@ def fact(x):
 	return ret
 
 def fib(x):
-	if x < 2:
-		return 1
-	else:
-		return fib(x-1) + fib(x-2)
+  if x < 2:
+    return 1
+  else:
+    return fib(x-1) + fib(x-2)
 
 def main():
-	print(fib(5))
-	print(fact(7))
+    print(fib(5))
+    print(fact(7))
 
 if 1 == 2:
-	main()
+   main()
 else:
-	main()
+     main()
