@@ -28,14 +28,14 @@ library
   ghc-options:
     -Wall
   build-depends:
-      base
-    , bifunctors
-    , containers
-    , directory >= 1.2.5 && < 1.4
+      base >= 4.9 && < 4.13
+    , bifunctors >= 5 && < 5.6
+    , containers >= 0.5 && < 0.7
+    , directory >= 1.2.2 && < 1.4
     , hpython
-    , lens
-    , optparse-applicative
-    , text
+    , lens >= 4.15 && < 4.18
+    , optparse-applicative >= 0.14 && < 0.15
+    , text >= 1.2 && < 1.3
     , validation >= 1 && < 1.1
   exposed-modules:
     Reindent.FileIO
@@ -49,10 +49,10 @@ executable reindent
   -- other-modules:
   -- other-extensions:
   build-depends:
-      base >=4.8 && < 4.13
+      base >=4.9 && < 4.13
     , hpython
     , reindent
-    , text
+    , text >= 1.2 && < 1.3
     , validation >= 1 && < 1.1
   hs-source-dirs:      src-exe
   default-language:    Haskell2010
