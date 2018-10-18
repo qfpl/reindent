@@ -9,12 +9,12 @@ import Data.Validation (Validation (Success, Failure))
 import System.Exit (exitFailure)
 
 import Language.Python.Parse as HPY
-import Language.Python.Internal.Render
-import Language.Python.Internal.Syntax
+import Language.Python.Internal.Render (showModule)
+import Language.Python.Internal.Syntax (Module)
 
-import Reindent.FileIO
-import Reindent.Options
-import Reindent.Transformation
+import Reindent.FileIO (Named (Named), getDirTrees, readNamedFiles, writeNamedFile)
+import Reindent.Options (desiredIndentation, optFiles, parseOpts)
+import Reindent.Transformation (reindent, runPypeline')
 
 parseNamedModule :: Named Text -> Validation (NonEmpty (ParseError SrcInfo)) (Named (Module '[] SrcInfo))
 parseNamedModule (Named n a) = Named n <$> HPY.parseModule n a

@@ -4,21 +4,22 @@
 module Reindent.Transformation.Indentation (DesiredIndentation (..), reindent) where
 
 import Control.Lens ((.~), toListOf, over, to)
-import Data.Bifunctor
-import Data.Bifoldable
-import Data.Bitraversable
+import Data.Bifunctor (Bifunctor (bimap))
+import Data.Bifoldable (Bifoldable (bifoldMap))
+import Data.Bitraversable (Bitraversable (bitraverse))
 import Data.Char (isSpace)
 import Data.List (replicate)
+import Data.Semigroup (Semigroup ((<>)))
 import Data.Sequence (Seq (Empty, (:<|), (:|>)))
 import qualified Data.Sequence as Seq
 import Data.Text (unpack)
 
-import Language.Python.Internal.Optics
+import Language.Python.Internal.Optics (_Indent)
 import Language.Python.Internal.Render (renderWhitespace, showRenderOutput)
-import Language.Python.Internal.Syntax.Statement
-import Language.Python.Internal.Syntax
+import Language.Python.Internal.Syntax.Statement (SimpleStatement (MkSimpleStatement), SmallStatement (Expr), Statement (CompoundStatement, SimpleStatement))
+import Language.Python.Internal.Syntax (Expr (String), Indents, Newline (CR,LF,CRLF), PyChar (Char_lit), Whitespace (Tab, Space), stringLiteralValue, indentsValue, indentWhitespaces)
 
-import Reindent.Transformation.Type
+import Reindent.Transformation.Type (Pypeline, allStatements)
 
 data DesiredIndentation =
   DITab | DISpaces Int
@@ -33,12 +34,12 @@ reindent :: forall f a. Applicative f => DesiredIndentation -> Pypeline f '[] a
 reindent di = allStatements (reindentMultiLineStrings . reindentStatement (expandDI di))
   where
     reindentStatement :: [Whitespace] -> Statement '[] a -> Statement '[] a
-    reindentStatement desired = (_Indent .~ desired)
+    reindentStatement desired = _Indent .~ desired
 
     reindentMultiLineStrings :: Applicative f => Statement '[] a -> Statement '[] a
     reindentMultiLineStrings smnt =
       case smnt of
-        x@(CompoundStatement _)             -> x
+        x@(CompoundStatement _)                                 -> x
         x@(SimpleStatement _ (MkSimpleStatement _ (_:_) _ _ _)) -> x
         SimpleStatement idnt (MkSimpleStatement a []    c d e)  ->
           SimpleStatement idnt (MkSimpleStatement (reindentString idnt a) [] c d e)
@@ -98,7 +99,7 @@ reindent di = allStatements (reindentMultiLineStrings . reindentStatement (expan
       LF   -> "\n"
       CRLF -> "\r\n"
 
-data AlterChunks a b =
+newtype AlterChunks a b =
   AC (Seq (Either a b))
 
 inL :: a -> AlterChunks a b
@@ -114,18 +115,18 @@ instance (Semigroup a, Semigroup b) => Semigroup (AlterChunks a b) where
     case (slast, shead) of
       (Left  x, Left  y) -> AC sinit <> AC (Seq.singleton (Left  (x <> y))) <> AC stail
       (Right x, Right y) -> AC sinit <> AC (Seq.singleton (Right (x <> y))) <> AC stail
-      (Left  _, Right _) -> AC $ sinit <> (Seq.fromList [slast, shead]) <> stail
-      (Right _, Left  _) -> AC $ sinit <> (Seq.fromList [slast, shead]) <> stail
+      (Left  _, Right _) -> AC $ sinit <> Seq.fromList [slast, shead] <> stail
+      (Right _, Left  _) -> AC $ sinit <> Seq.fromList [slast, shead] <> stail
 
 instance (Semigroup a, Semigroup b) => Monoid (AlterChunks a b) where
   mempty = AC mempty
   mappend = (<>)
 
 instance Bifunctor AlterChunks where
-  bimap = bimapDefault
+  bimap f g (AC s) = AC (fmap (bimap f g) s)
 
 instance Bifoldable AlterChunks where
-  bifoldMap = bifoldMapDefault
+  bifoldMap f g (AC s) = foldMap (bifoldMap f g) s
 
 instance Bitraversable AlterChunks where
   bitraverse f g (AC s) = AC <$> traverse (bitraverse f g) s

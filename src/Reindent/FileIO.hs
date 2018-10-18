@@ -3,7 +3,7 @@ module Reindent.FileIO where
 import Data.List (isPrefixOf, isSuffixOf)
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
-import System.Directory
+import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
 
 -- some data along with its filepath
 data Named a =
@@ -36,6 +36,8 @@ isPythonFile = isSuffixOf ".py"
 isHidden :: FilePath -> Bool
 isHidden = isPrefixOf "."
 
+-- This is pretty dodgy. It should probably be replaced with something else,
+-- or at least handle exceptions better (at all)
 getDirTree :: FilePath -> IO [FilePath]
 getDirTree fp = do
   isFile <- doesFileExist fp
@@ -45,7 +47,7 @@ getDirTree fp = do
     isDir <- doesDirectoryExist fp
     if not isDir then pure []
     else do
-      contents <- filter (not . isHidden) <$> listDirectory fp
+      contents <- filter (not . isHidden) <$> getDirectoryContents fp
       let fps = (\x -> fp ++ "/" ++ x) <$> contents
       concat <$> traverse getDirTree fps
 

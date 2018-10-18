@@ -8,12 +8,13 @@
 module Reindent.Transformation.Type where
 
 import Prelude hiding ((.),id)
-import Control.Category
-import Control.Lens
+import Control.Category (Category ((.), id))
+import Control.Lens (Wrapped, Unwrapped, makeWrapped, over, transform, view, _Unwrapped', _Wrapped')
 import Control.Monad ((<=<))
-import Data.Functor.Identity (Identity)
+import Data.Functor.Identity (Identity (runIdentity))
+import Data.Semigroup (Semigroup ((<>)))
 
-import Language.Python.Internal.Syntax
+import Language.Python.Internal.Syntax (Module, Statement, _Statements)
 
 ---- Types
 newtype Pyfactor f j k a b = Pyfactor { runPyfactor :: Module j a -> f (Module k b) }
