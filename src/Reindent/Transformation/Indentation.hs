@@ -3,7 +3,7 @@
 
 module Reindent.Transformation.Indentation (DesiredIndentation (..), reindent) where
 
-import Control.Lens ((.~), toListOf, over, to)
+import Control.Lens ((.~), toListOf, over, to, transform)
 import Data.Bifunctor (Bifunctor (bimap))
 import Data.Bifoldable (Bifoldable (bifoldMap))
 import Data.Bitraversable (Bitraversable (bitraverse))
@@ -16,10 +16,8 @@ import Data.Text (unpack)
 
 import Language.Python.Internal.Optics (_Indent)
 import Language.Python.Internal.Render (renderWhitespace, showRenderOutput)
-import Language.Python.Internal.Syntax.Statement (SimpleStatement (MkSimpleStatement), SmallStatement (Expr), Statement (CompoundStatement, SimpleStatement))
-import Language.Python.Internal.Syntax (Expr (String), Indents, Newline (CR,LF,CRLF), PyChar (Char_lit), Whitespace (Tab, Space), stringLiteralValue, indentsValue, indentWhitespaces)
-
-import Reindent.Transformation.Type (Pypeline, allStatements)
+import Language.Python.Internal.Syntax.Statement (SimpleStatement (MkSimpleStatement), SmallStatement (Expr), Statement (CompoundStatement, SimpleStatement), _Statements)
+import Language.Python.Internal.Syntax (Expr (String), Indents, Module, Newline (CR,LF,CRLF), PyChar (Char_lit), Whitespace (Tab, Space), stringLiteralValue, indentsValue, indentWhitespaces)
 
 data DesiredIndentation =
   DITab | DISpaces Int
@@ -30,13 +28,13 @@ expandDI di = case di of
   DITab      -> [Tab]
   DISpaces i -> replicate i Space
 
-reindent :: forall f a. Applicative f => DesiredIndentation -> Pypeline f '[] a
-reindent di = allStatements (reindentMultiLineStrings . reindentStatement (expandDI di))
+reindent :: DesiredIndentation -> Module '[] a -> Module '[] a
+reindent di = (over _Statements . transform) (reindentMultiLineStrings . reindentStatement (expandDI di))
   where
     reindentStatement :: [Whitespace] -> Statement '[] a -> Statement '[] a
     reindentStatement desired = _Indent .~ desired
 
-    reindentMultiLineStrings :: Applicative f => Statement '[] a -> Statement '[] a
+    reindentMultiLineStrings :: Statement '[] a -> Statement '[] a
     reindentMultiLineStrings smnt =
       case smnt of
         x@(CompoundStatement _)                                 -> x
