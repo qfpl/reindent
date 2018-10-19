@@ -14,7 +14,7 @@ import Language.Python.Internal.Syntax (Module)
 
 import Reindent.FileIO (Named (Named), getDirTrees, readNamedFiles, writeNamedFile)
 import Reindent.Options (desiredIndentation, optFiles, parseOpts)
-import Reindent.Transformation (reindent, runPypeline')
+import Reindent.Transformation (reindent)
 
 parseNamedModule :: Named Text -> Validation (NonEmpty (ParseError SrcInfo)) (Named (Module '[] SrcInfo))
 parseNamedModule (Named n a) = Named n <$> HPY.parseModule n a
@@ -27,7 +27,7 @@ main :: IO ()
 main = do
   opts <- parseOpts
   let desiredIndent = desiredIndentation opts
-  let refactor = runPypeline' (reindent desiredIndent)
+  let refactor = reindent desiredIndent
   filePaths <- getDirTrees (optFiles opts)
   files <- readNamedFiles filePaths
   case parseNamedModules files of

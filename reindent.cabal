@@ -42,7 +42,6 @@ library
     Reindent.Options
     Reindent.Transformation
     Reindent.Transformation.Indentation
-    Reindent.Transformation.Type
 
 executable reindent
   main-is:             Main.hs
