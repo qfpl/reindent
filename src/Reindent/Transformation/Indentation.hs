@@ -14,7 +14,7 @@ import Data.Sequence (Seq (Empty, (:<|), (:|>)))
 import qualified Data.Sequence as Seq
 import Data.Text (unpack)
 
-import Language.Python.Internal.Optics (_Indent)
+import Language.Python.Optics (_Indent)
 import Language.Python.Internal.Render (renderWhitespace, showRenderOutput)
 import Language.Python.Internal.Syntax.Statement (SimpleStatement (MkSimpleStatement), SmallStatement (Expr), Statement (CompoundStatement, SimpleStatement), _Statements)
 import Language.Python.Internal.Syntax (Expr (String), Indents, Module, Newline (CR,LF,CRLF), PyChar (Char_lit), Whitespace (Tab, Space), stringLiteralValue, indentsValue, indentWhitespaces)
