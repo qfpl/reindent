@@ -12,15 +12,16 @@ def fib(x):
     return fib(x-1) + fib(x-2)
 
 def wiggle(z):
- x = [ "I am",
-   "a list!",
-   "of strings"
- ]
- return JsonResponse({
-  "wiggle": 5,
-  # this is really important
-  "wobble": 6
- })
+  x = [
+    "I am",
+    "a list!",
+    "of strings"
+  ]
+  return JsonResponse({
+    "wiggle": 5,
+    # this is really important
+    "wobble": x
+  })
 
 def main():
     "This is a comment"
