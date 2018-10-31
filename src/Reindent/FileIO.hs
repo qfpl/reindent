@@ -11,6 +11,7 @@ data Named a =
     name  :: FilePath
   , value :: a
   }
+  deriving (Eq, Ord, Show)
 
 instance Functor Named where
   fmap f (Named n a) = Named n (f a)

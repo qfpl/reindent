@@ -16,8 +16,11 @@ import Data.Text (unpack)
 
 import Language.Python.Optics (_Indent)
 import Language.Python.Internal.Render (renderWhitespace, showRenderOutput)
-import Language.Python.Internal.Syntax.Statement (SimpleStatement (MkSimpleStatement), SmallStatement (Expr), Statement (CompoundStatement, SimpleStatement), _Statements)
-import Language.Python.Internal.Syntax (Expr (String), Indents, Module, Newline (CR,LF,CRLF), PyChar (Char_lit), Whitespace (Tab, Space), stringLiteralValue, indentsValue, indentWhitespaces)
+import Language.Python.Syntax.Statement (SimpleStatement (MkSimpleStatement), SmallStatement (Expr), Statement (CompoundStatement, SimpleStatement), _Statements)
+import Language.Python.Internal.Syntax (PyChar (Char_lit), stringLiteralValue)
+import Language.Python.Syntax.Expr (Expr (String))
+import Language.Python.Syntax.Module (Module)
+import Language.Python.Syntax.Whitespace (Indents, Newline (CR,LF,CRLF), Whitespace (Space, Tab), indentsValue, indentWhitespaces)
 
 data DesiredIndentation =
   DITab | DISpaces Int

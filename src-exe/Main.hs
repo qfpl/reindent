@@ -9,8 +9,8 @@ import Data.Validation (Validation (Success, Failure))
 import System.Exit (exitFailure)
 
 import Language.Python.Parse as HPY
-import Language.Python.Internal.Render (showModule)
-import Language.Python.Internal.Syntax (Module)
+import Language.Python.Render (showModule)
+import Language.Python.Syntax.Module (Module)
 
 import Reindent.FileIO (Named (Named), getDirTrees, readNamedFiles, writeNamedFile)
 import Reindent.Options (desiredIndentation, optFiles, parseOpts)
