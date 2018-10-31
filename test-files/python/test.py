@@ -11,6 +11,13 @@ def fib(x):
   else:
     return fib(x-1) + fib(x-2)
 
+def wiggle(z):
+ return JsonResponse({
+  "wiggle": 5,
+  # this is really important
+  "wobble: 6"
+ })
+
 def main():
     "This is a comment"
     """This is also a comment"""
