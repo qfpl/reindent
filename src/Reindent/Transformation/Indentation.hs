@@ -1,26 +1,18 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Reindent.Transformation.Indentation (DesiredIndentation (..), reindent) where
+module Reindent.Transformation.Indentation (DesiredIndentation (..), reindentLexically) where
 
-import Control.Lens ((.~), toListOf, over, to, transform)
-import Data.Bifunctor (Bifunctor (bimap))
-import Data.Bifoldable (Bifoldable (bifoldMap))
-import Data.Bitraversable (Bitraversable (bitraverse))
-import Data.Char (isSpace)
+import Control.Lens ((.~))
 import Data.List (replicate)
-import Data.Semigroup (Semigroup ((<>)))
-import Data.Sequence (Seq (Empty, (:<|), (:|>)))
-import qualified Data.Sequence as Seq
-import Data.Text (unpack)
+import Data.List.NonEmpty (NonEmpty)
+import Data.Text (Text)
+import Data.Validation (Validation (..))
 
 import Language.Python.Optics (_Indent)
-import Language.Python.Internal.Render (renderWhitespace, showRenderOutput)
-import Language.Python.Syntax.Statement (SimpleStatement (MkSimpleStatement), SmallStatement (Expr), Statement (CompoundStatement, SimpleStatement), _Statements)
-import Language.Python.Internal.Syntax (PyChar (Char_lit), stringLiteralValue)
-import Language.Python.Syntax.Expr (Expr (String))
-import Language.Python.Syntax.Module (Module)
-import Language.Python.Syntax.Whitespace (Indents, Newline (CR,LF,CRLF), Whitespace (Space, Tab), indentsValue, indentWhitespaces)
+import Language.Python.Internal.Render (showTokens)
+import Language.Python.Internal.Lexer (initialSrcInfo, insertTabs, tokenize)
+import Language.Python.Syntax.Whitespace (Whitespace (Space, Tab))
 
 data DesiredIndentation =
   DITab | DISpaces Int
@@ -31,103 +23,19 @@ expandDI di = case di of
   DITab      -> [Tab]
   DISpaces i -> replicate i Space
 
-reindent :: DesiredIndentation -> Module '[] a -> Module '[] a
-reindent di = (over _Statements . transform) (reindentMultiLineStrings . reindentStatement (expandDI di))
-  where
-    reindentStatement :: [Whitespace] -> Statement '[] a -> Statement '[] a
-    reindentStatement desired = _Indent .~ desired
-
-    reindentMultiLineStrings :: Statement '[] a -> Statement '[] a
-    reindentMultiLineStrings smnt =
-      case smnt of
-        x@(CompoundStatement _)                                 -> x
-        x@(SimpleStatement _ (MkSimpleStatement _ (_:_) _ _ _)) -> x
-        SimpleStatement idnt (MkSimpleStatement a []    c d e)  ->
-          SimpleStatement idnt (MkSimpleStatement (reindentString idnt a) [] c d e)
-      where
-        reindentString idnt (Expr a (String a2 nel)) = Expr a (String a2 (fmap (modifyLiterals idnt) nel))
-        reindentString _    x                        = x
-
-        modifyLiterals idnt =
-          over stringLiteralValue (reindentLiteral idnt)
-
-    alterchunks :: [PyChar] -> AlterChunks [PyChar] [Newline]
-    alterchunks = foldMap f
-      where
-        f :: PyChar -> AlterChunks [PyChar] [Newline]
-        f pc =
-          case pc of
-            Char_lit '\r'  -> inR [CR]
-            Char_lit '\n'  -> inR [LF]
-            c@(Char_lit _) -> inL [c]
-            x              -> inL [x]
-
-    reindentLiteral :: Indents a -> [PyChar] -> [PyChar]
-    reindentLiteral idnts input =
-      let chunks = alterchunks input
-      in  go chunks
-      where
-        go :: AlterChunks [PyChar] [Newline] -> [PyChar]
-        go (AC Empty) = []
-        go (AC (Left x  :<| tl))    = x <> go (AC tl)
-        go (AC (Right x :<| Empty)) = nlpc x
-        go (AC (Right x :<| Left y  :<| tl)) = reindentLine x y <> go (AC tl)
-        go (AC (Right x :<| Right y :<| tl)) = nlpc x <> nlpc y <> go (AC tl)
-
-        nlpc = foldMap displayNewline
-        wspc = fmap Char_lit . unpack . showRenderOutput . renderWhitespace
-
-        reindentLine :: [Newline] -> [PyChar] -> [PyChar]
-        reindentLine nl pc =
-          nlpc nl <> idnts' <> stripPrefix pc
-            where
-              idnts' = toListOf (
-                  indentsValue.traverse
-                  .indentWhitespaces.traverse
-                  .to wspc.traverse
-                ) idnts
-
-    stripPrefix :: [PyChar] -> [PyChar]
-    stripPrefix str =
-      let isSpacePC :: PyChar -> Bool
-          isSpacePC (Char_lit c) = isSpace c
-          isSpacePC _ = False
-      in  dropWhile isSpacePC str
-
-    displayNewline :: Newline -> [PyChar]
-    displayNewline nl = Char_lit <$> case nl of
-      CR   -> "\r"
-      LF   -> "\n"
-      CRLF -> "\r\n"
-
-newtype AlterChunks a b =
-  AC (Seq (Either a b))
-
-inL :: a -> AlterChunks a b
-inL = AC . Seq.singleton . Left
-
-inR :: b -> AlterChunks a b
-inR = AC . Seq.singleton . Right
-
-instance (Semigroup a, Semigroup b) => Semigroup (AlterChunks a b) where
-  x     <> AC Empty = x
-  AC Empty <> y     = y
-  AC (sinit :|> slast) <> AC (shead :<| stail) =
-    case (slast, shead) of
-      (Left  x, Left  y) -> AC sinit <> AC (Seq.singleton (Left  (x <> y))) <> AC stail
-      (Right x, Right y) -> AC sinit <> AC (Seq.singleton (Right (x <> y))) <> AC stail
-      (Left  _, Right _) -> AC $ sinit <> Seq.fromList [slast, shead] <> stail
-      (Right _, Left  _) -> AC $ sinit <> Seq.fromList [slast, shead] <> stail
-
-instance (Semigroup a, Semigroup b) => Monoid (AlterChunks a b) where
-  mempty = AC mempty
-  mappend = (<>)
-
-instance Bifunctor AlterChunks where
-  bimap f g (AC s) = AC (fmap (bimap f g) s)
-
-instance Bifoldable AlterChunks where
-  bifoldMap f g (AC s) = foldMap (bifoldMap f g) s
-
-instance Bitraversable AlterChunks where
-  bitraverse f g (AC s) = AC <$> traverse (bitraverse f g) s
+reindentLexically
+  :: DesiredIndentation
+  -> FilePath
+  -> Text
+  -> Validation (NonEmpty String) Text
+reindentLexically di fp m =
+  let
+    ws = expandDI di
+    si = initialSrcInfo fp
+    tokens = insertTabs si <$> tokenize fp m
+    e = fmap (traverse.traverse._Indent .~ ws) tokens
+  in
+    case e of
+      Left es         -> Failure (pure (show es))
+      Right (Left es) -> Failure (pure (show es))
+      Right (Right x) -> Success (showTokens x)

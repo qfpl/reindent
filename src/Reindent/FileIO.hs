@@ -1,5 +1,9 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Reindent.FileIO where
 
+import Control.Lens.Indexed (FunctorWithIndex (..), FoldableWithIndex (..), TraversableWithIndex (..))
 import Data.List (isPrefixOf, isSuffixOf)
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
@@ -21,6 +25,15 @@ instance Foldable Named where
 
 instance Traversable Named where
   traverse f (Named n a) = Named n <$> f a
+
+instance FunctorWithIndex [Char] Named where
+  imap f (Named n a) = Named n (f n a)
+
+instance FoldableWithIndex [Char] Named where
+  ifoldMap f (Named n a) = f n a
+
+instance TraversableWithIndex [Char] Named where
+  itraverse f (Named n a) = Named n <$> f n a
 
 writeNamedFile :: Named Text -> IO ()
 writeNamedFile (Named fp text) = Text.writeFile fp text

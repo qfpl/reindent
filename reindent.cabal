@@ -50,6 +50,7 @@ executable reindent
   build-depends:
       base >=4.9 && < 4.13
     , hpython
+    , lens >= 4.15 && < 4.18
     , reindent
     , text >= 1.2 && < 1.3
     , validation >= 1 && < 1.1
